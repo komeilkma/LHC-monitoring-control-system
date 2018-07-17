@@ -1,0 +1,169 @@
+
+nav .oi-chevron-right {
+    float: right;
+    margin-top:5px;
+    font-size: 12px;
+}
+nav .oi-chevron-right:before {
+    content: '\e035';
+}
+.active > a > .oi-chevron-right:before {
+    content: '\e034';
+}
+
+/* NAVBAR (Side) */
+.navbar-static-side {
+    background-color: rgba(59, 63, 64, 1);
+}
+
+/* NAVBAR (Side) */
+#side-menu ul.nav {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+/* SIDEBAR HEADER */
+.sidebar-header {
+    color: #A9A9A9;
+    font-weight: 600;
+    line-height: 20px;
+    margin: 0;
+    padding: 10px 0px 0px;
+    text-transform: uppercase;
+}
+body.mini-navbar .sidebar-header {
+    display: none;
+}
+
+/* NAV */
+#sidebar-collapse .nav > li {
+    margin-top: 4px;
+    border-radius: 3px;
+}
+#sidebar-collapse .nav > li > a {
+    color: #FFFFFF;
+    font-weight: 600;
+    padding: 10px 15px 10px 10px;
+}
+#sidebar-collapse .nav > li > a > i {
+    margin-right: 6px;
+    font-size: 16px;
+    top: 2px;
+}
+#sidebar-collapse .nav > li > a:focus {
+    text-decoration: none;
+    background: none;
+}
+#sidebar-collapse .nav > li.selected > a {
+    background-color: #31ab33;
+    border-radius: 3px;
+    color: #FFF;
+}
+#sidebar-collapse .nav > li:not(.selected).dropped > a, 
+#sidebar-collapse .nav > li:not(.selected) > a:hover {
+    color: #000;
+    background-color: #FFFFFF;
+    outline: 0;
+    border-radius: 3px;
+}
+#sidebar-collapse .nav.nav-second-level > li > a:hover {
+    border-radius: 0px;
+}
+
+/* NAV SECOND LEVEL */
+body:not(.mini-navbar) #sidebar-collapse .nav .nav-second-level {
+    background-color: rgba(0,0,0,0.1);
+}
+
+#sidebar-collapse .nav > li > ul.nav-second-level > li > a {
+    color: #FFF;
+    background: none;
+    padding: 5px 15px 5px 10px;
+    text-align: left;
+}
+#sidebar-collapse .nav > li > ul.nav-second-level > li.active > a {
+    color: #FFF;
+    background: none;
+    padding: 5px 15px 5px 10px;
+    box-shadow: inset 2px 0px 0px 0px #31ab33;
+    margin-left: 10px;
+}
+#sidebar-collapse .nav > li > ul.nav-second-level > li.active > a:hover {
+    margin-left: 10px;
+}
+#sidebar-collapse .nav > li > ul.nav-second-level > li > a:hover {
+    color: #FFF;
+    background: none;
+    margin-left: -3px;
+}
+
+/* MINI NAV BAR */
+body.mini-navbar #sidebar-collapse .nav > li > a:focus {
+    text-decoration: none;
+    background: none;
+    color: #FFFFFF;
+}
+body.mini-navbar #sidebar-collapse .nav > li > a {
+    color: #FFFFFF;
+    font-weight: 600;
+    padding: 10px 10px !important;
+}
+body.mini-navbar #sidebar-collapse .nav > li > a > i {
+    margin-right: 0px !important;
+    font-size: 16px !important;
+}
+body.mini-navbar #sidebar-collapse .nav > li > a:hover {
+    background-color: #FFFFFF;
+    color: #000;
+    outline: 0;
+    border-radius: 3px;
+}
+body.mini-navbar #sidebar-collapse .nav > li > a > i {
+    margin-right: 0px;
+    font-size: 16px;
+}
+body.mini-navbar .nav > li > a {
+    text-align: center;
+}
+body.mini-navbar .nav li > .nav-second-level {
+    display: none;
+}
+body.mini-navbar .nav li:hover > .nav-second-level > li > a:hover, 
+body.mini-navbar .nav li:hover > .nav-second-level > li > a:focus {
+    background-color: #292C2D;
+    outline: 0;
+}
+body.mini-navbar .nav li:hover > .nav-second-level {
+    position: absolute;
+    left: 40px;
+    padding-left: 5px;
+    padding-bottom: 5px;
+    top: 38px;
+    display: block;
+    border-radius: 0 2px 2px 0;
+    min-width: 200px;
+    height: auto !important;
+    background-color: #292C2D;
+    border-left-width: 10px;
+    border-left-color: rgba(59, 63, 64, 1);
+    border-left-style: solid;
+}
+body.mini-navbar .nav li:hover .nav-label {
+    color: #FFF;
+    position: absolute;
+    left: 40px;
+    padding-bottom: 5px;
+    margin-left: 10px;
+    margin-right: 10px;
+    padding-top: 10px;
+    top: 0px;
+    display: block;
+    border-top-left-radius: 2px;
+    border-top-right-radius: 2px;
+    min-width: 200px;
+    height: 40px;
+    background-color: rgba(59, 63, 64, 0.99);
+    border-left-width: 10px;
+    border-left-color: rgba(59, 63, 64, 1);
+    border-left-style: solid;
+}
