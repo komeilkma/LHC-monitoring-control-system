@@ -1,4 +1,4 @@
-# ipm-software
+# IPM-Software
 System control software for the CERN project under development at ipm
 <h3>First step</br>
 Develop user section and access level management</h3>
