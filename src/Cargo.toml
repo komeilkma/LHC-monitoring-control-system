@@ -1,15 +1,10 @@
 [package]
-authors = ["The Rust Project Developers"]
-name = "rustc-main"
+authors = ["Komeil Majidi"]
+name = "IPM Software"
 version = "0.0.0"
 
 [[bin]]
-name = "rustc_binary"
-path = "rustc.rs"
+name = "IPM Software"
+path = "admin.rs"
 
-[dependencies]
-rustc_target = { path = "../librustc_target" }
-rustc_driver = { path = "../librustc_driver" }
 
-[features]
-jemalloc = ["rustc_target/jemalloc"]
