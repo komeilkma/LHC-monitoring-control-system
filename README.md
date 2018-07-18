@@ -5,7 +5,7 @@ Develop user section and access level management</h3>
 <h4>requirements</h4>
 1-Install Rust Programming Language
 install curl in linux
-<img src="https://im6.ezgif.com/tmp/ezgif-6-93acafd24e.gif">
+<img src="http://uupload.ir/files/imrk_ezgif-2-7ba2cb5b7d.gif">
 curl this:
 
 ```
