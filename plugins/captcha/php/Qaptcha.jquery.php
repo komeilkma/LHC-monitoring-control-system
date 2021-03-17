@@ -27,4 +27,4 @@ else
 {
 	$aResponse['error'] = true;
 	echo json_encode($aResponse);
-}
+
