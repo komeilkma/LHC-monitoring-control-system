@@ -1,0 +1,8 @@
+[package]
+authors = ["Komeil Majidi"]
+name = "IPM Software"
+version = "0.0.0"
+
+[[bin]]
+name = "IPM Software"
+path = "admin.rs"
