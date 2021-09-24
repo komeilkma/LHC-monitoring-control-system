@@ -1,137 +1,106 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
+from __future__ import absolute_import
+
 import argparse
-import importlib
-import json
-import os
-import logging
-import logging.config
 import sys
 
-
-log = logging.getLogger(__name__)
-
-LOG_FORMAT = (
-    "%(asctime)s UTC - %(levelname)s - (PID: %(process)d) - %(name)s - %(message)s"
-)
-queue_handler = None
+from . import pytest, report
+from .errors import UnsupportedToolError, UnsupportedCommandError
 
 
-def add_arguments(parser):
-    parser.description = "Daemon"
-
-    parser.add_argument(
-        "--daemon-module",
-        default="vscode_datascience_helpers.daemon.daemon_python",
-        help="Daemon Module",
-    )
-
-    log_group = parser.add_mutually_exclusive_group()
-    log_group.add_argument(
-        "--log-config", help="Path to a JSON file containing Python logging config."
-    )
-    log_group.add_argument(
-        "--log-file",
-        help="Redirect logs to the given file instead of writing to stderr."
-        "Has no effect if used with --log-config.",
-    )
-
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="count",
-        default=0,
-        help="Increase verbosity of log output, overrides log config file",
-    )
+TOOLS = {
+    "pytest": {
+        "_add_subparser": pytest.add_cli_subparser,
+        "discover": pytest.discover,
+    },
+}
+REPORTERS = {
+    "discover": report.report_discovered,
+}
 
 
-class TemporaryQueueHandler(logging.Handler):
-    """Logger used to temporarily store everything into a queue.
-    Later the messages are pushed back to the RPC client as a notification.
-    Once the RPC channel is up, we'll stop queuing messages and sending id directly.
+def parse_args(
+    # the args to parse
+    argv=sys.argv[1:],
+    # the program name
+    prog=sys.argv[0],
+):
     """
+    Return the subcommand & tool to run, along with its args.
 
-    def __init__(self):
-        logging.Handler.__init__(self)
-        self.queue = []
-        self.server = None
+    This defines the standard CLI for the different testing frameworks.
+    """
+    parser = argparse.ArgumentParser(
+        description="Run Python testing operations.",
+        prog=prog,
+        # ...
+    )
+    cmdsubs = parser.add_subparsers(dest="cmd")
 
-    def set_server(self, server):
-        # Send everything that has beeen queued until now.
-        self.server = server
-        for msg in self.queue:
-            self.server._endpoint.notify("log", msg)
-        self.queue = []
+    # Add "run" and "debug" subcommands when ready.
+    for cmdname in ["discover"]:
+        sub = cmdsubs.add_parser(cmdname)
+        subsubs = sub.add_subparsers(dest="tool")
+        for toolname in sorted(TOOLS):
+            try:
+                add_subparser = TOOLS[toolname]["_add_subparser"]
+            except KeyError:
+                continue
+            subsub = add_subparser(cmdname, toolname, subsubs)
+            if cmdname == "discover":
+                subsub.add_argument("--simple", action="store_true")
+                subsub.add_argument(
+                    "--no-hide-stdio", dest="hidestdio", action="store_false"
+                )
+                subsub.add_argument("--pretty", action="store_true")
 
-    def emit(self, record):
-        data = {
-            "level": record.levelname,
-            "msg": self.format(record),
-            "pid": os.getpid(),
-        }
-        # If we don't have the server, then queue it and send it later.
-        if self.server is None:
-            self.queue.append(data)
-        else:
-            self.server._endpoint.notify("log", data)
-
-
-def _configure_logger(verbose=0, log_config=None, log_file=None):
-    root_logger = logging.root
-    global queue_handler
-    if log_config:
-        with open(log_config, "r") as f:
-            logging.config.dictConfig(json.load(f))
+    # Parse the args!
+    if "--" in argv:
+        sep_index = argv.index("--")
+        toolargs = argv[sep_index + 1 :]
+        argv = argv[:sep_index]
     else:
-        formatter = logging.Formatter(LOG_FORMAT)
-        if log_file:
-            log_handler = logging.handlers.RotatingFileHandler(
-                log_file,
-                mode="a",
-                maxBytes=50 * 1024 * 1024,
-                backupCount=10,
-                encoding=None,
-                delay=0,
-            )
-            log_handler.setFormatter(formatter)
-            root_logger.addHandler(log_handler)
-        else:
-            queue_handler = TemporaryQueueHandler()
-            root_logger.addHandler(queue_handler)
+        toolargs = []
+    args = parser.parse_args(argv)
+    ns = vars(args)
 
-    if verbose == 0:
-        level = logging.WARNING
-    elif verbose == 1:
-        level = logging.INFO
-    elif verbose >= 2:
-        level = logging.DEBUG
+    cmd = ns.pop("cmd")
+    if not cmd:
+        parser.error("missing command")
 
-    root_logger.setLevel(level)
+    tool = ns.pop("tool")
+    if not tool:
+        parser.error("missing tool")
+
+    return tool, cmd, ns, toolargs
 
 
-def main():
-    """Starts the daemon.
-    The daemon_module allows authors of modules to provide a custom daemon implementation.
-    E.g. we have a base implementation for standard python functionality,
-    and a custom daemon implementation for DS work (related to jupyter).
-    """
-    parser = argparse.ArgumentParser()
-    add_arguments(parser)
-    args = parser.parse_args()
-    _configure_logger(args.verbose, args.log_config, args.log_file)
-
-    log.info("Starting daemon from %s.PythonDaemon", args.daemon_module)
+def main(
+    toolname,
+    cmdname,
+    subargs,
+    toolargs,
+    # internal args (for testing):
+    _tools=TOOLS,
+    _reporters=REPORTERS,
+):
     try:
-        daemon_module = importlib.import_module(args.daemon_module)
-        daemon_cls = daemon_module.PythonDaemon
-        daemon_cls.start_daemon(queue_handler)
-    except Exception:
-        import traceback
+        tool = _tools[toolname]
+    except KeyError:
+        raise UnsupportedToolError(toolname)
 
-        log.error(traceback.format_exc())
-        raise Exception("Failed to start daemon")
+    try:
+        run = tool[cmdname]
+        report_result = _reporters[cmdname]
+    except KeyError:
+        raise UnsupportedCommandError(cmdname)
+
+    parents, result = run(toolargs, **subargs)
+    report_result(result, parents, **subargs)
 
 
 if __name__ == "__main__":
-    main()
+    tool, cmd, subargs, toolargs = parse_args()
+    main(tool, cmd, subargs, toolargs)
