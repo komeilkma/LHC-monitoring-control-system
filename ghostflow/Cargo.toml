@@ -1,0 +1,40 @@
+[package]
+name = "ghostflow for LHC-monitoring-control-system"
+version = "0.1.0"
+authors = ["Komeil Majidi <komeilkma@gmail.com>"]
+license = "MIT/Apache-2.0"
+description = """
+"""
+workspace = ".."
+repository = "https://github.com/komeilkma/LHC-monitoring-control-system"
+edition = "2022"
+
+[dev-dependencies]
+git-checks = "^4.2"
+
+[target.'cfg(unix)'.dev-dependencies]
+libc = "~0.2"
+
+[dependencies]
+derive_builder = "~0.11"
+digest = "~0.10"
+either = "^1.0"
+itertools = "~0.10"
+lazy_static = "^1.0"
+log = "~0.4.4"
+md-5 = "~0.10"
+rand = "~0.8"
+rayon = "^1.0"
+rustversion = "^1.0"
+sha2 = "~0.10"
+tempfile = "^3.2.0"
+thiserror = "^1.0.4"
+topological-sort = "~0.2.0"
+wait-timeout = "~0.2"
+
+chrono = { version = "~0.4", default-features = false }
+git-checks-core = "^1.2"
+git-topic-stage = "^4.0"
+git-workarea = "^4.0"
+regex = "^1.0"
+serde_json = "^1.0"
