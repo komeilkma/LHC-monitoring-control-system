@@ -1,5 +1,5 @@
 use crate::host::types::{Commit, MergeRequest, Repo};
-
+use crate::host::{HostingService, HostingServiceError};
 
 /// States for a pipeline as a whole.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -52,3 +52,28 @@ pub struct PipelineJob {
     pub id: u64,
 }
 
+/// Pipeline information for a hosting service.
+///
+/// Not all services have this, so it is a separate trait.
+pub trait HostedPipelineService: HostingService {
+    /// Get all of the pipelines for a merge request.
+    fn pipelines_for_mr(
+        &self,
+        mr: &MergeRequest,
+    ) -> Result<Option<Vec<Pipeline>>, HostingServiceError>;
+    /// Get all of the jobs for a pipeline.
+    fn pipeline_jobs(
+        &self,
+        pipeline: &Pipeline,
+    ) -> Result<Option<Vec<PipelineJob>>, HostingServiceError>;
+    /// Trigger a job.
+    ///
+    /// Start running a job on the CI service. Note that jobs currently running have a
+    /// service-defined behavior (i.e., trigger requests may either be ignored or the job canceled
+    /// and restarted).
+    ///
+    /// Note that if the service does not support starting as a specific user, the `user` argument
+    /// may be silently ignored.
+    fn trigger_job(&self, job: &PipelineJob, user: Option<&str>)
+        -> Result<(), HostingServiceError>;
+}
