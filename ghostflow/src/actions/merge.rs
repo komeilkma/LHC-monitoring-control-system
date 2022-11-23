@@ -166,3 +166,8 @@ impl InternalMergeError {
         }
     }
 }
+
+mod policy;
+pub use self::policy::MergePolicy;
+pub use self::policy::MergePolicyFilter;
+
