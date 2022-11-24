@@ -171,3 +171,9 @@ mod policy;
 pub use self::policy::MergePolicy;
 pub use self::policy::MergePolicyFilter;
 
+mod settings;
+pub use self::settings::IntoBranch;
+pub use self::settings::MergeActionResult;
+pub use self::settings::MergeSettings;
+pub use self::settings::MergeTopology;
+
