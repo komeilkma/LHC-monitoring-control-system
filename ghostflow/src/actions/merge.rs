@@ -180,3 +180,10 @@ pub use self::settings::MergeTopology;
 mod prelude_impl;
 
 mod trailers;
+
+mod simple;
+pub use self::simple::Merge;
+mod backport;
+pub use self::backport::MergeBackport;
+pub use self::backport::MergeMany;
+
