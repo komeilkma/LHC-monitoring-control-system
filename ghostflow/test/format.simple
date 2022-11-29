@@ -1,0 +1,16 @@
+#!/bin/bash
+
+set -e
+
+readonly path="$1"
+shift
+
+if ! [ -f "format-config" ]; then
+    echo >&2 'error: a `format-config` file is missing'
+    exit 1
+fi
+
+while read old new; do
+    [ -z "$old" ] && break
+    sed -i -e "s/$old/$new/g" "$path"
+done < "format-config"

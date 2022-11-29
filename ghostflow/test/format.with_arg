@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -e
+
+readonly path="$1"
+shift
+
+readonly arg="$1"
+shift
+
+if ! [ "$arg" = "value" ]; then
+    exit 1
+fi
+
+sed -i -e "s/ARG/$arg/g" "$path"
