@@ -141,6 +141,8 @@ impl GithubAction {
             Ok(PULL_REQUEST) => {
                 let path =
                     env::var_os("GITHUB_EVENT_PATH").ok_or(GithubActionError::NoEventPath)?;
+                let file = File::open(path).map_err(GithubActionError::open_event_path)?;
+                let reader = BufReader::new(file);
                 let event: events::PullRequest = serde_json::from_reader(reader)
                     .map_err(|err| GithubActionError::parse_event(PULL_REQUEST, err))?;
                 let pr = event.pull_request;
@@ -178,10 +180,10 @@ impl GithubAction {
         let path = env::var_os("GITHUB_WORKSPACE").ok_or(GithubActionError::NoWorkspace)?;
         let context = GitContext::new(path);
 
-        // FIXME: Github Enterprise?
+        // FIXME: Github Enterprise self hosted? 
         let host = "github.com";
         let client = Github::new_action(host).map_err(GithubActionError::auth)?;
-        let services = GithubService::new(client).map_err(GithubActionError::service_init)?;
+        let service = GithubService::new(client).map_err(GithubActionError::service_init)?;
 
         Ok(Self {
             context,
