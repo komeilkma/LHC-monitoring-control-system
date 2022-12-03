@@ -4,6 +4,8 @@
 
 #![cfg_attr(feature = "doc", feature(external_doc))]
 
+#![cfg_attr(feature = "doc", feature(external_doc))]
+
 use std::num::ParseIntError;
 use std::process::Command;
 use std::sync::Arc;
@@ -26,6 +28,13 @@ pub mod formatters {}
 
 mod config;
 
+mod host;
+use host::{Ci, CiError, Local, LocalError, LocalService};
+
+mod command;
+use command::check::{Check, CheckError};
+use command::reformat::{Reformat, ReformatError};
+
 #[derive(Debug, Error)]
 #[non_exhaustive]
 enum SetupError {
@@ -41,6 +50,8 @@ enum SetupError {
     UnknownColor { color: String },
     #[error("failed to find `.git` directory: {}", output)]
     FindGitDir { output: String },
+    #[error("unknown command '{}'", command)]
+    UnknownCommand { command: String },
     #[error("failed to initialize the global rayon thread pool: {}", source)]
     RayonThreadPoolInit {
         #[from]
@@ -99,7 +110,11 @@ impl SetupError {
         }
     }
 
-
+    fn unknown_command(command: String) -> Self {
+        SetupError::UnknownCommand {
+            command,
+        }
+    }
 }
 
 enum Logger {
