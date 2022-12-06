@@ -102,13 +102,28 @@ impl Registry {
     }
 }
 
+fn default_empty_object() -> Value {
+    Value::Object(Default::default())
+}
+
+#[derive(Debug, Deserialize)]
+struct CheckRead {
+    kind: String,
+    #[serde(default = "default_empty_object")]
+    config: Value,
+}
+
+#[derive(Debug, Default, Deserialize)]
 pub struct Read(Vec<CheckRead>);
+
 type CheckVec<T> = Vec<Box<T>>;
+
 pub struct Config {
     branch: CheckVec<dyn BranchCheck>,
     commit: CheckVec<dyn Check>,
     topic: CheckVec<dyn TopicCheck>,
 }
+
 impl Config {
     pub fn load(read: Read) -> ConfigResult<Self> {
         let registry = &*CHECK_REGISTRY;

@@ -2,7 +2,9 @@ use clap::{Arg, ArgMatches, Command};
 use git_checks_config::{BranchCheckConfig, CommitCheckConfig, TopicCheckConfig};
 use itertools::Itertools;
 use thiserror::Error;
+
 use crate::exit_code::ExitCode;
+
 #[derive(Debug, Error)]
 #[non_exhaustive]
 pub enum ListError {
@@ -88,5 +90,34 @@ impl List {
         Ok(ExitCode::Success)
     }
 
-
+    pub fn subcommand() -> Command<'static> {
+        Command::new("list")
+            .about("list available checks")
+            .arg(
+                Arg::new("FORMAT")
+                    .short('f')
+                    .long("format")
+                    .help("Format for the list of checks")
+                    .default_value("human")
+                    .possible_values(["human"]),
+            )
+            .arg(
+                Arg::new("BRANCH")
+                    .short('b')
+                    .long("branch")
+                    .help("Output branch checks"),
+            )
+            .arg(
+                Arg::new("COMMIT")
+                    .short('c')
+                    .long("commit")
+                    .help("Output commit checks"),
+            )
+            .arg(
+                Arg::new("TOPIC")
+                    .short('t')
+                    .long("topic")
+                    .help("Output topic checks"),
+            )
+    }
 }
