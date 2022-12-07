@@ -3,6 +3,7 @@ use std::fmt::Debug;
 use std::iter;
 use std::thread;
 use std::time::Duration;
+
 use graphql_client::{GraphQLQuery, QueryBody, Response};
 use itertools::Itertools;
 use log::{info, warn};
@@ -13,6 +14,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use thiserror::Error;
 
+use crate::authorization::{CurrentUser, GithubAuthError, GithubAuthorization};
 
 // The maximum number of times we will retry server errors.
 const BACKOFF_LIMIT: usize = 5;
@@ -66,7 +68,11 @@ pub enum GithubError {
     NoResponse {},
     #[error("failure even after exponential backoff")]
     GithubBackoff {},
-
+    #[error("authorization error: {}", source)]
+    Authorization {
+        #[from]
+        source: GithubAuthError,
+    },
 }
 
 impl GithubError {
@@ -111,6 +117,12 @@ impl GithubError {
         }
     }
 
+    fn graphql(message: Vec<graphql_client::Error>) -> Self {
+        GithubError::GraphQL {
+            message,
+        }
+    }
+
     fn no_response() -> Self {
         GithubError::NoResponse {}
     }
@@ -135,7 +147,23 @@ pub struct Github {
     rest_endpoint: Url,
     /// The endpoint for GraphQL queries.
     gql_endpoint: Url,
+
+    /// The authorization process for the client.
+    authorization: GithubAuthorization,
 }
+
+impl Github {
+    fn new_impl(host: &str, authorization: GithubAuthorization) -> GithubResult<Self> {
+        let rest_endpoint = Url::parse(&format!("https://{}/", host))?;
+        let gql_endpoint = Url::parse(&format!("https://{}/graphql", host))?;
+
+        Ok(Github {
+            client: Client::new(),
+            rest_endpoint,
+            gql_endpoint,
+            authorization,
+        })
+    }
 
     /// Create a new Github client as a GitHub App.
     ///
@@ -162,6 +190,10 @@ pub struct Github {
             .into_iter()
             .map(|(s, i)| (s.into(), i))
             .collect();
+        let authorization =
+            GithubAuthorization::new_app(host.as_ref(), app_id, private_key.as_ref(), ids)?;
+
+        Self::new_impl(host.as_ref(), authorization)
     }
 
     /// Create a new Github client as a GitHub Action.
@@ -175,6 +207,53 @@ pub struct Github {
     /// [new-app]: https://developer.github.com/apps/building-your-first-github-app/#register-a-new-app-with-github
     pub fn new_action<H>(host: H) -> GithubResult<Self>
     where
+        H: AsRef<str>,
+    {
+        let authorization = GithubAuthorization::new_action()?;
+
+        Self::new_impl(host.as_ref(), authorization)
+    }
+
+    pub(crate) fn app_id(&self) -> Option<i64> {
+        self.authorization.app_id()
+    }
+
+    pub(crate) fn current_user(&self) -> GithubResult<CurrentUser> {
+        self.authorization.current_user(&self.client)
+    }
+
+    /// The authorization header for GraphQL.
+    fn installation_auth_header(&self, owner: &str) -> GithubResult<HeaderMap> {
+        let token = self.authorization.token(&self.client, owner)?;
+        let mut header_value: HeaderValue = format!("token {}", token).parse().unwrap();
+        header_value.set_sensitive(true);
+        Ok([(header::AUTHORIZATION, header_value)]
+            .iter()
+            .cloned()
+            .collect())
+    }
+
+    /// Accept headers for REST.
+    fn rest_accept_headers() -> HeaderMap {
+        [
+            // GitHub v3 API
+            (
+                header::ACCEPT,
+                "application/vnd.github.v3+json".parse().unwrap(),
+            ),
+        ]
+        .iter()
+        .cloned()
+        .collect()
+    }
+
+    /// Accept headers for GraphQL.
+    ///
+    /// We're using preview APIs and we need these to get access to them.
+    fn gql_accept_headers() -> HeaderMap {
+        HeaderMap::new()
+    }
+
     pub(crate) fn post<D>(&self, owner: &str, endpoint: &str, data: &D) -> GithubResult<Value>
     where
         D: Serialize,
@@ -360,4 +439,23 @@ mod test {
         }
     }
 
+    #[test]
+    fn ensure_graphql_headers_work() {
+        let req = Client::new()
+            .post("https://nowhere")
+            .headers(Github::gql_accept_headers())
+            .build()
+            .unwrap();
+
+        let headers = req.headers();
+
+        for (key, value) in Github::gql_accept_headers().iter() {
+            if !headers.get_all(key).iter().any(|av| av == value) {
+                panic!(
+                    "GraphQL request is missing HTTP header `{}: {:?}`",
+                    key, value,
+                );
+            }
+        }
+    }
 }
