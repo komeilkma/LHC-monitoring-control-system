@@ -1,0 +1,327 @@
+fragment UserInfo on User {
+    name
+    login
+    # XXX(github): It seems that having the `user:email` scope in the
+    # application isn't enough. Some OAuth hoops may be necessary here.
+    # email
+}
+
+fragment BotActorInfo on Bot {
+    login
+}
+
+fragment OrganizationActorInfo on Organization {
+    name
+    login
+    email
+}
+
+fragment MannequinActorInfo on Mannequin {
+    login
+    email
+}
+
+fragment EnterpriseUserAccountActorInfo on EnterpriseUserAccount {
+    login
+    name
+}
+
+fragment RepoInfo on Repository {
+    owner {
+        __typename
+        login
+    }
+    name
+    sshUrl
+    parent {
+        owner {
+            __typename
+            login
+        }
+        name
+        sshUrl
+        parent {
+            owner {
+                __typename
+                login
+            }
+            name
+        }
+        #...RepoInfo
+    }
+}
+
+fragment RateLimitInfo on Query {
+    rateLimit {
+        cost
+        limit
+        remaining
+        resetAt
+    }
+}
+
+fragment CommitInfo on Commit {
+    oid
+    pushedDate
+    committedDate,
+    author {
+        user {
+            ...UserInfo
+        }
+        name
+        email
+    }
+    message
+}
+
+fragment PullRequestInfo on PullRequest {
+    sourceRepo: headRepository {
+        ...RepoInfo
+    }
+    sourceBranch: headRefName
+    targetRepo: repository {
+        ...RepoInfo
+    }
+    targetBranch: baseRefName
+    url
+    title
+    description: body
+    headRefOid
+    isDraft
+    author {
+        __typename
+        ...BotActorInfo
+        ...OrganizationActorInfo
+        ...UserInfo
+        ...MannequinActorInfo
+        ...EnterpriseUserAccountActorInfo
+    }
+}
+
+fragment IssueCommentInfo on IssueComment {
+    id
+    author {
+        __typename
+        ...BotActorInfo
+        ...OrganizationActorInfo
+        ...UserInfo
+        ...MannequinActorInfo
+        ...EnterpriseUserAccountActorInfo
+    }
+    createdAt
+    content: body
+}
+
+fragment PullRequestReviewInfo on PullRequestReview {
+    id
+    author {
+        __typename
+        ...BotActorInfo
+        ...OrganizationActorInfo
+        ...UserInfo
+        ...MannequinActorInfo
+        ...EnterpriseUserAccountActorInfo
+    }
+    createdAt
+    content: body
+}
+
+query User($name: String!) {
+    user(login: $name) {
+        ...UserInfo
+    }
+    ...RateLimitInfo
+}
+
+query Commit($owner: String!, $name: String!, $commit: GitObjectID!) {
+    repository(owner: $owner, name: $name) {
+        object(oid: $commit) {
+            __typename
+            repository {
+                ...RepoInfo
+            }
+            oid
+        }
+    }
+    ...RateLimitInfo
+}
+
+query PullRequest($owner: String!, $name: String!, $pull: Int!) {
+    repository(owner: $owner, name: $name) {
+        pullRequest(number: $pull) {
+            ...PullRequestInfo
+        }
+    }
+    ...RateLimitInfo
+}
+
+query Repository($owner: String!, $name: String!) {
+    repository(owner: $owner, name: $name) {
+        ...RepoInfo
+    }
+    ...RateLimitInfo
+}
+
+query IssueID($owner: String!, $name: String!, $issue: Int!) {
+    repository(owner: $owner, name: $name) {
+        issue(number: $issue) {
+            id
+        }
+    }
+    ...RateLimitInfo
+}
+
+mutation PostComment($input: AddCommentInput!) {
+    addComment(input: $input) {
+        # XXX(graphql): We need to request *something* back.
+        clientMutationId
+    }
+}
+
+query PullRequestComments($owner: String!, $name: String!, $pull: Int!, $cursor: String) {
+    repository(owner: $owner, name: $name) {
+        pullRequest(number: $pull) {
+            timelineItems(first: 100, after: $cursor, itemTypes: [ISSUE_COMMENT, PULL_REQUEST_COMMIT, PULL_REQUEST_REVIEW]) {
+                items: nodes {
+                    __typename
+                    ... on IssueComment {
+                        ...IssueCommentInfo
+                    }
+                    ... on PullRequestCommit {
+                        commit {
+                            ...CommitInfo
+                        }
+                    }
+                    ... on PullRequestReview {
+                        ...PullRequestReviewInfo
+                    }
+                    # TODO: Get commit and review comment threads?
+                }
+                pageInfo {
+                    endCursor
+                    hasNextPage
+                }
+            }
+        }
+    }
+    ...RateLimitInfo
+}
+
+query PullRequestID($owner: String!, $name: String!, $pull: Int!) {
+    repository(owner: $owner, name: $name) {
+        pullRequest(number: $pull) {
+            id
+        }
+    }
+    ...RateLimitInfo
+}
+
+query CommitStatuses($owner: String!, $name: String!, $commit: GitObjectID!, $appId: Int) {
+    repository(owner: $owner, name: $name) {
+        object(oid: $commit) {
+            __typename
+            ... on Commit {
+                checkSuites(first: 1, filterBy: { appId: $appId }) {
+                    checkSuite: nodes {
+                        __typename
+                        branch {
+                            name
+                        }
+
+                        # XXX(ghostflow): Not caring about paging this; if
+                        # ghostflow has 100+ latest check runs, it's not a
+                        # supported configuration.
+                        checkRuns(first: 100, filterBy: { appId: $appId, status: COMPLETED, checkType: LATEST }) {
+                            checkRuns: nodes {
+                                conclusion
+                                name
+                                summary
+                                detailsUrl
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    ...RateLimitInfo
+}
+
+query RepositoryID($owner: String!, $name: String!) {
+    repository(owner: $owner, name: $name) {
+        id
+    }
+    ...RateLimitInfo
+}
+
+mutation PostCheckRun($input: CreateCheckRunInput!) {
+    createCheckRun(input: $input) {
+        # XXX(graphql): We need to request *something* back.
+        clientMutationId
+    }
+}
+
+query PullRequestReactions($owner: String!, $name: String!, $pull: Int!, $cursor: String) {
+    repository(owner: $owner, name: $name) {
+        pullRequest(number: $pull) {
+            reactions(first: 100, after: $cursor) {
+                reactions: nodes {
+                    __typename
+                    content
+                    user {
+                        ...UserInfo
+                    }
+                }
+                pageInfo {
+                    endCursor
+                    hasNextPage
+                }
+            }
+        }
+    }
+    ...RateLimitInfo
+}
+
+query IssuesClosedByPullRequest($owner: String!, $name: String!, $pull: Int!, $cursor: String) {
+    repository(owner: $owner, name: $name) {
+        pullRequest(number: $pull) {
+            closingIssuesReferences(first: 100, after: $cursor) {
+                issues: nodes {
+                    repository {
+                        ...RepoInfo
+                    }
+                    number
+                    url
+                    # XXX(ghostflow): Not caring about paging this; if issues
+                    # have 100+ labels, it's not a supported configuration.
+                    labels(first: 100) {
+                        names: nodes {
+                            name
+                        }
+                    }
+                }
+                pageInfo {
+                    endCursor
+                    hasNextPage
+                }
+            }
+        }
+    }
+    ...RateLimitInfo
+}
+
+query LabelID($owner: String!, $name: String!, $label: String!) {
+    repository(owner: $owner, name: $name) {
+        label(name: $label) {
+            id
+        }
+    }
+    ...RateLimitInfo
+}
+
+mutation AddIssueLabels($input: AddLabelsToLabelableInput!) {
+    addLabelsToLabelable(input: $input) {
+        # XXX(graphql): We need to request *something* back.
+        clientMutationId
+    }
+}
