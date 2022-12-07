@@ -1,0 +1,29 @@
+[package]
+name = "ghostflow-github for LHC-monitoring-control-system"
+version = "0.1.0"
+authors = ["Komeil Majidi <komeilkma@gmail.com>"]
+license = "MIT/Apache-2.0"
+description = """
+ ghostflow traits on LHC-monitoring-control-system for GitHub.
+"""
+workspace = ".."
+repository = "https://github.com/komeilkma/LHC-monitoring-control-system"
+readme = "README.md"
+keywords = ["git", "workflow", "ghostflow", "github"]
+edition = "2022"
+
+[dependencies]
+chrono = { version = "~0.4.16", default-features = false, features = ["serde"] }
+graphql_client = "~0.11"
+itertools = "~0.10"
+jsonwebtoken = "^8.0"
+log = "~0.4.4"
+reqwest = { version = "~0.11", features = ["blocking"] }
+serde_json = "^1.0"
+thiserror = "^1.0.2"
+ttl_cache = "~0.5"
+url = "^2.0"
+
+ghostflow = { version = "~0.1", path = "../ghostflow" }
+git-workarea = "^4.0"
+serde = { version = "^1.0", features = ["derive"] }
