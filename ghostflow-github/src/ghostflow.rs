@@ -200,7 +200,7 @@ impl From<queries::commit_statuses::CheckConclusionState> for CommitStatusState 
     }
 }
 
-
+/*
 fn extract_run_state(
     state: CommitStatusState,
 ) -> (
@@ -216,7 +216,7 @@ fn extract_run_state(
         CommitStatusState::Failed => (Some(FAILURE), COMPLETED),
     }
 }
-
+*/
 
 fn extract_run_state_rest(state: CommitStatusState) -> (Option<&'static str>, &'static str) {
     match state {
@@ -240,6 +240,8 @@ fn extract_run_state_rest(state: CommitStatusState) -> (Option<&'static str>, &'
 ///     * Repository contents
 ///     * Repository metadata
 ///
+/// User permissions should include read-only access to email addresses. Note that this does not
+/// currently work however and even with that permission, reading email addresses is being denied.
 pub struct GithubService {
     /// The Github client.
     github: Github,
@@ -431,7 +433,7 @@ impl GithubService {
             .post(owner, &endpoint, &data)
             .map_err(HostingServiceError::host)?;
 
-        
+        /*
         let vars = queries::repository_id::Variables {
             owner: owner.into(),
             name: name.into(),
@@ -477,7 +479,7 @@ impl GithubService {
             .send::<queries::PostCheckRun>(owner, &mutation)
             .compat()
             .map_err(HostingServiceError::host)?;
-        
+        */
 
         Ok(())
     }

@@ -169,7 +169,7 @@ impl_into_rate_limit_info!(issue_id::RateLimitInfoRateLimit);
 impl_into_rate_limit_info!(pull_request_comments::RateLimitInfoRateLimit);
 impl_into_rate_limit_info!(pull_request_id::RateLimitInfoRateLimit);
 impl_into_rate_limit_info!(commit_statuses::RateLimitInfoRateLimit);
-impl_into_rate_limit_info!(repository_id::RateLimitInfoRateLimit);
+//impl_into_rate_limit_info!(repository_id::RateLimitInfoRateLimit);
 impl_into_rate_limit_info!(pull_request_reactions::RateLimitInfoRateLimit);
 impl_into_rate_limit_info!(issues_closed_by_pull_request::RateLimitInfoRateLimit);
 impl_into_rate_limit_info!(label_id::RateLimitInfoRateLimit);
