@@ -1,5 +1,15 @@
 # LHC monitoring and control system 
 System control software for the CERN project under development at ipm
+Task List
+- [x] ghostflow
+- [x] ghostflow-cli
+- [ ] ghostflow-cli-docs
+- [x] ghostflow-github
+- [ ] ghostflow-github-docs
+- [ ] ghostflow-gitlab
+- [ ] ghostflow-gitlab-docs
+- [ ] lua-call-system
+- [ ] lua-mqtt
 <h3>First step</br>
 Develop user section and access level management</h3>
 <h4>requirements</h4>
