@@ -393,6 +393,10 @@ function getRsrp()
 	return rsrp
 end
 
+function getenodBid()
+	return enodBid
+end
+
 function getCell()
 	local i,ret = 1,""
 	for i=1,cellinfo.cnt do
