@@ -1,0 +1,19 @@
+[package]
+name = "ghostflow-gitlab LHC-monitoring-control-system"
+version = "0.1.0"
+authors = ["Komeil Majidi <komeilkma@gmail.com>"]
+Implementation of ghostflow on LHC-monitoring-control-system traits for GitLab.
+"""
+workspace = ".."
+repository = "https://github.com/komeilkma/LHC-monitoring-control-system"
+readme = "README.md"
+keywords = ["git", "workflow", "ghostflow", "gitlab"]
+edition = "2022"
+[dependencies]
+chrono = { version = "~0.4.16", default-features = false }
+itertools = "~0.10"
+lazy_static = "^1.0"
+regex = "^1.0"
+ghostflow = { version = "~0.1", path = "../ghostflow" }
+git-workarea = "^4.0"
+gitlab = "=0.1502.0"
